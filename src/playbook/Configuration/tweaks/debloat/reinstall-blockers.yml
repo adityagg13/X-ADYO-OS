@@ -1,0 +1,76 @@
+---
+title: Reinstall Blockers
+description: >-
+  Stops Windows from putting removed apps back: disables the consumer features
+  that auto-install suggested apps, disables automatic app suggestions and marks
+  the retired packages as deprovisioned. Works on Windows 10 and Windows 11.
+onUpgrade: false
+actions:
+  # ---------------------------------------------------------------------------------
+  # Consumer features: Windows otherwise silently reinstalls "suggested" apps and
+  # games after feature updates. This is the same switch the Enterprise GPO uses.
+  # ---------------------------------------------------------------------------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent'
+    value: 'DisableWindowsConsumerFeatures'
+    data: '1'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent'
+    value: 'DisableConsumerAccountStateContent'
+    data: '1'
+    type: REG_DWORD
+
+  # Silent app installs / repair (Windows 10 path)
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate'
+    value: 'AutoDownload'
+    data: '2'
+    type: REG_DWORD
+
+  # Don't let Store push "recommended" apps
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\WindowsStore'
+    value: 'AutoDownload'
+    data: '2'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\WindowsStore'
+    value: 'DisableStoreApps'
+    data: '0'
+    type: REG_DWORD
+
+  # ---------------------------------------------------------------------------------
+  # Deprovisioned markers for apps the playbook retires by default. DEPROVISION.ps1
+  # already removes whatever disappeared; these markers additionally survive a
+  # re-provision triggered by a cumulative update.
+  # ---------------------------------------------------------------------------------
+  - !registryKey:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Deprovisioned\MicrosoftTeams_8wekyb3d8bbwe'
+    operation: add
+  - !registryKey:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Deprovisioned\Microsoft.549981C3F5F10_8wekyb3d8bbwe'
+    operation: add
+  - !registryKey:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Deprovisioned\Microsoft.Microsoft3DViewer_8wekyb3d8bbwe'
+    operation: add
+  - !registryKey:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Deprovisioned\Microsoft.BingNews_8wekyb3d8bbwe'
+    operation: add
+  - !registryKey:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Deprovisioned\Microsoft.BingWeather_8wekyb3d8bbwe'
+    operation: add
+  - !registryKey:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Deprovisioned\Microsoft.MicrosoftSolitaireCollection_8wekyb3d8bbwe'
+    operation: add
+
+  # Windows 11 only markers
+  - !registryKey:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Deprovisioned\Clipchamp.Clipchamp_yxz26nhyzhsrt'
+    operation: add
+    builds: ['>=22000']
+  - !registryKey:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Deprovisioned\Microsoft.Windows.DevHome_8wekyb3d8bbwe'
+    operation: add
+    builds: ['>=22000']
+    option: 'remove-appx-devhome'

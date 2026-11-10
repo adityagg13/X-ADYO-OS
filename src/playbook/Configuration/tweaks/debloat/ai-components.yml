@@ -1,0 +1,81 @@
+---
+title: Remove AI components (Windows 11)
+description: >-
+  Runs only on Windows 11 (build 22000+) and only when "Remove AI" is selected.
+  Removes the Copilot app and provider packages, disables Recall snapshots and the
+  Click to Do / Image Creator entry points, and hides the taskbar Copilot button.
+  Windows 10 has none of these features, so the module is fully gated.
+builds: ['>=22000']
+option: 'remove-ai'
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Removing AI components'}
+
+  - !taskKill: {name: 'Copilot*', ignoreErrors: true}
+
+  # App packages (24H2+ ships these as removable AppX; on 22H2/23H2 most are no-ops)
+  - !appx: {name: 'Microsoft.Copilot*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.Windows.Ai.Copilot.Provider*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.WindowsAI*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.MicrosoftOfficeHub.Copilot*', type: family, errorAction: Log}
+
+  # --- Copilot entry points ---------------------------------------------------------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot'
+    value: 'TurnOffWindowsCopilot'
+    data: '1'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot'
+    value: 'TurnOffWindowsCopilot'
+    data: '1'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'ShowCopilotButton'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+
+  # --- Recall / Windows AI (24H2+) --------------------------------------------------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI'
+    value: 'DisableAIDataAnalysis'
+    data: '1'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI'
+    value: 'AllowRecallEnablement'
+    data: '0'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI'
+    value: 'DisableClickToDo'
+    data: '1'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI'
+    value: 'DisableImageCreator'
+    data: '1'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKCU\Software\Policies\Microsoft\Windows\WindowsAI'
+    value: 'DisableAIDataAnalysis'
+    data: '1'
+    type: REG_DWORD
+    scope: currentUser
+
+  # Remove the Recall optional feature when present (best effort, feature may be absent)
+  - !powerShell:
+    command: |
+      $feature = Get-WindowsOptionalFeature -Online -FeatureName 'Recall' -ErrorAction SilentlyContinue
+      if ($feature -and $feature.State -eq 'Enabled') {
+          Disable-WindowsOptionalFeature -Online -FeatureName 'Recall' -NoRestart -ErrorAction SilentlyContinue | Out-Null
+          Write-Output 'AI: Recall optional feature disabled'
+      } else {
+          Write-Output 'AI: Recall feature not present - nothing to do'
+      }
+      exit 0
+    wait: true
+    errorAction: Log

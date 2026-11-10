@@ -1,0 +1,76 @@
+---
+title: Remove OneDrive
+description: >-
+  Opt-in removal of the OneDrive sync client. Uninstalls the per-user setup binary
+  for every profile, removes the leftover folders, and blocks reinstallation with
+  the documented OneDrive policy.
+option: 'remove-onedrive'
+onUpgrade: false
+actions:
+  # RISK: files already synced stay in the cloud; anything not synced stays on disk
+  # but is no longer backed up. Undo: winget install Microsoft.OneDrive
+  - !writeStatus: {status: 'Removing OneDrive'}
+
+  - !taskKill: {name: 'OneDrive*', ignoreErrors: true}
+  - !taskKill: {name: 'FileCoAuth*', ignoreErrors: true}
+
+  # Run the vendor uninstaller for every profile that still has the setup binary,
+  # then delete leftovers. 64-bit and 32-bit locations are both covered.
+  - !powerShell:
+    command: |
+      $setupPaths = @(
+        "$env:SystemRoot\System32\OneDriveSetup.exe",
+        "$env:SystemRoot\SysWOW64\OneDriveSetup.exe"
+      )
+      foreach ($setup in $setupPaths) {
+        if (Test-Path -LiteralPath $setup) {
+          Write-Output "ONEDRIVE: running uninstaller $setup"
+          Start-Process -FilePath $setup -ArgumentList '/uninstall' -Wait -NoNewWindow -ErrorAction SilentlyContinue
+        }
+      }
+      $userRoots = @("$env:SystemDrive\Users", "$env:PUBLIC")
+      foreach ($root in $userRoots) {
+        Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+          $onedrive = Join-Path $_.FullName 'OneDrive'
+          if (Test-Path -LiteralPath $onedrive) {
+            Write-Output "ONEDRIVE: removing $onedrive"
+            Remove-Item -LiteralPath $onedrive -Recurse -Force -ErrorAction SilentlyContinue
+          }
+          $local = Join-Path $_.FullName 'AppData\Local\Microsoft\OneDrive'
+          if (Test-Path -LiteralPath $local) {
+            Remove-Item -LiteralPath $local -Recurse -Force -ErrorAction SilentlyContinue
+          }
+        }
+      }
+      foreach ($p in @("$env:ProgramData\Microsoft OneDrive", "$env:LOCALAPPDATA\Microsoft\OneDrive")) {
+        if (Test-Path -LiteralPath $p) { Remove-Item -LiteralPath $p -Recurse -Force -ErrorAction SilentlyContinue }
+      }
+      exit 0
+    wait: true
+    runas: currentUserElevated
+    errorAction: Log
+
+  # Block the "sync your files" nudge and reinstallation
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive'
+    value: 'DisableFileSyncNGSC'
+    data: '1'
+    type: REG_DWORD
+
+  # Remove the per-user autostart entries
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
+    value: 'OneDrive'
+    operation: delete
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
+    value: 'OneDrive'
+    operation: delete
+
+  # Remove the Explorer namespace entry (OneDrive node in the sidebar)
+  - !registryKey:
+    path: 'HKCR\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}'
+    operation: delete
+  - !registryKey:
+    path: 'HKCR\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}'
+    operation: delete

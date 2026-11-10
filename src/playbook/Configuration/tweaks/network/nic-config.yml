@@ -1,0 +1,43 @@
+---
+title: Network Adapter Configuration
+description: >-
+  Applies per-adapter tuning: stops Windows from powering down network adapters
+  and disables delayed ACK / Nagle batching on the interfaces that are up. Both
+  settings work on Windows 10 and Windows 11; adapters that do not expose the
+  values are skipped.
+actions:
+  - !writeStatus: {status: 'Configuring network adapters'}
+
+  - !powerShell:
+    command: |
+      $ErrorActionPreference = 'SilentlyContinue'
+
+      # --- 1. Power management: "Allow the computer to turn off this device" ---------------
+      # PnPCapabilities 24 (0x18) = do not allow the device to be powered down.
+      $classNet = 'HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}'
+      $adapters = Get-NetAdapter -Physical | Where-Object { $_.Status -eq 'Up' }
+      foreach ($adapter in $adapters) {
+          $guid = $adapter.InterfaceGuid
+          Get-ChildItem -Path $classNet -ErrorAction SilentlyContinue | ForEach-Object {
+              $props = Get-ItemProperty -Path $_.PSPath -ErrorAction SilentlyContinue
+              if ($props.NetCfgInstanceId -eq $guid) {
+                  Set-ItemProperty -Path $_.PSPath -Name 'PnPCapabilities' -Value 24 -Type DWord -ErrorAction SilentlyContinue
+                  Write-Output "NIC: power saving disabled on $($adapter.Name)"
+              }
+          }
+      }
+
+      # --- 2. Latency: delayed ACK / Nagle off -------------------------------------------
+      $tcpIf = 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces'
+      foreach ($adapter in $adapters) {
+          $key = Join-Path $tcpIf $adapter.InterfaceGuid
+          if (Test-Path $key) {
+              Set-ItemProperty -Path $key -Name 'TcpAckFrequency' -Value 1 -Type DWord -ErrorAction SilentlyContinue
+              Set-ItemProperty -Path $key -Name 'TCPNoDelay' -Value 1 -Type DWord -ErrorAction SilentlyContinue
+              Set-ItemProperty -Path $key -Name 'TcpDelAckTicks' -Value 0 -Type DWord -ErrorAction SilentlyContinue
+              Write-Output "NIC: latency settings applied to $($adapter.Name)"
+          }
+      }
+      exit 0
+    wait: true
+    errorAction: Log

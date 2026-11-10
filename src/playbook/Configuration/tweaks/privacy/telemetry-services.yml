@@ -1,0 +1,26 @@
+---
+title: Telemetry Services
+description: >-
+  Stops the Windows telemetry pipeline on both Windows 10 and Windows 11. Only
+  the components that exist purely for diagnostic data collection are touched;
+  Windows Update, Defender and time sync are never modified.
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Stopping telemetry services'}
+
+  # Connected User Experiences and Telemetry - the main DiagTrack pipeline
+  - !service: {name: 'DiagTrack', operation: change, startup: 4, errorAction: Log}
+
+  # Windows Error Reporting - crash dumps stay local, nothing is uploaded
+  - !service: {name: 'WerSvc', operation: change, startup: 3, errorAction: Log}
+
+  # Device metadata push (present on Windows 10 and early Windows 11 builds)
+  - !service: {name: 'dmwappushservice', operation: change, startup: 4, errorAction: Log}
+
+  # Diagnostic Policy Service stays automatic (troubleshooting depends on it),
+  # but its data collection is switched off by telemetry-policies.yml
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack'
+    value: 'ShutdownTime'
+    operation: delete
+    errorAction: Log

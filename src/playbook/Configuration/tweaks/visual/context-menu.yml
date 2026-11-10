@@ -1,0 +1,29 @@
+---
+title: Classic Context Menu
+description: >-
+  Windows 11 only. Restores the full Windows 10 style right-click menu by
+  shadowing the Windows 11 COM handler with an empty in-proc server entry.
+  Skipped on Windows 10, where the menu is already classic.
+builds: ['>=22000']
+option: 'configure-lcm'
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Restoring the classic context menu'}
+
+  # The CLSID {86ca1aa0-34aa-4e8b-a509-50c905bae2a2} InprocServer32 key in HKCU
+  # shadows the HKLM handler in the merged HKCR view. The (Default) value must be an
+  # explicit empty string - an absent default would let the real HKLM server path
+  # through, so a bare key add is not enough.
+  - !registryKey:
+    path: 'HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
+    operation: add
+
+  # Write the empty (Default) value. reg add /ve is the same mechanism used here;
+  # it is idempotent and works from the elevated user context.
+  - !powerShell:
+    command: 'reg add HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32 /ve /t REG_SZ /f'
+    wait: true
+    runas: currentUserElevated
+    errorAction: Log
+
+  # Takes effect after Explorer restarts - finish.yml restarts Explorer at the end.

@@ -1,0 +1,88 @@
+---
+title: Network Core
+description: >-
+  Removes Windows' network throttling for multimedia, disables LLMNR multicast
+  name resolution, turns off SMB bandwidth throttling and closes anonymous SMB
+  sessions. Safe on Windows 10 and Windows 11; SMB file sharing keeps working.
+actions:
+  - !writeStatus: {status: 'Optimizing network stack'}
+
+  # --- Remove the 10 ms network throttle that Windows applies to non-media apps ------------
+  # 0xFFFFFFFF = throttling disabled.
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile'
+    value: 'NetworkThrottlingIndex'
+    data: '4294967295'
+    type: REG_DWORD
+
+  # --- LLMNR off (multicast name resolution leaks hostnames on the network) ---------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient'
+    value: 'EnableMulticast'
+    data: '0'
+    type: REG_DWORD
+
+  # --- SMB server hardening ---------------------------------------------------------------
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters'
+    value: 'RestrictNullSessAccess'
+    data: '1'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters'
+    value: 'NullSessionPipes'
+    data: ''
+    type: REG_MULTI_SZ
+    errorAction: Log
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters'
+    value: 'SMB1'
+    data: '0'
+    type: REG_DWORD
+    errorAction: Log
+
+  # SMB bandwidth throttling off (cmdlet exists on Win10 1809+ and Win11)
+  - !powerShell:
+    command: |
+      try {
+          Set-SmbServerConfiguration -EnableBandwidthThrottling $false -Force -ErrorAction Stop
+          Write-Output 'NET: SMB bandwidth throttling disabled'
+      } catch {
+          Write-Output "NET: SMB throttling unchanged: $($_.Exception.Message)"
+      }
+      exit 0
+    wait: true
+    errorAction: Log
+
+  # --- Wi-Fi Sense auto-connect (Windows 10 only; harmless no-op on 11) -------------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config'
+    value: 'AutoConnectAllowedOEM'
+    data: '0'
+    type: REG_DWORD
+    builds: ['<22000']
+    errorAction: Log
+
+  # --- HomeGroup (Windows 10 only, removed in Windows 11) ---------------------------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\HomeGroup'
+    value: 'DisableHomeGroup'
+    data: '1'
+    type: REG_DWORD
+    builds: ['<22000']
+    errorAction: Log
+
+  # --- IPv4: keep the stack conservative ---------------------------------------------------
+  # No TTL / MTU hacks: they break VPNs, tethering and some ISPs.
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters'
+    value: 'EnableICMPRedirect'
+    data: '0'
+    type: REG_DWORD
+    errorAction: Log
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters'
+    value: 'DisableIPSourceRouting'
+    data: '2'
+    type: REG_DWORD
+    errorAction: Log

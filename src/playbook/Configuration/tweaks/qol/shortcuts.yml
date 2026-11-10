@@ -1,0 +1,49 @@
+---
+title: Shortcuts and Long Paths
+description: >-
+  Enables long path support (needed by modern toolchains on both Windows 10 and
+  Windows 11) and creates shortcuts to the X-ADYO OS tooling folder.
+actions:
+  - !writeStatus: {status: 'Creating shortcuts'}
+
+  # --- Long paths (Windows 10 1607+ and Windows 11) ----------------------------------------
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\FileSystem'
+    value: 'LongPathsEnabled'
+    data: '1'
+    type: REG_DWORD
+
+  # --- Shortcuts to C:\Windows\X-ADYO-OS ------------------------------------------------------
+  # Created for every profile so the tools are reachable from Start and the desktop.
+  - !powerShell:
+    command: |
+      $tools = Join-Path ([Environment]::GetFolderPath('Windows')) 'X-ADYO-OS'
+      if (-not (Test-Path -LiteralPath $tools)) {
+          Write-Output 'SHORTCUTS: X-ADYO-OS folder missing - skipped'
+          exit 0
+      }
+      $shell = New-Object -ComObject WScript.Shell
+      $profiles = Get-ChildItem 'C:\Users' -Directory -ErrorAction SilentlyContinue |
+                  Where-Object { $_.Name -notin @('Public','Default','All Users') }
+      foreach ($profile in $profiles) {
+          foreach ($pair in @(
+              @{ Dir = (Join-Path $profile.FullName 'Desktop');          Name = 'X-ADYO OS.lnk';        Target = $tools },
+              @{ Dir = (Join-Path $profile.FullName 'AppData\Roaming\Microsoft\Windows\Start Menu\Programs'); Name = 'X-ADYO OS.lnk'; Target = $tools }
+          )) {
+              if (-not (Test-Path -LiteralPath $pair.Dir)) { continue }
+              $link = Join-Path $pair.Dir $pair.Name
+              try {
+                  $sc = $shell.CreateShortcut($link)
+                  $sc.TargetPath = $pair.Target
+                  $sc.WorkingDirectory = $pair.Target
+                  $sc.Description = 'X-ADYO OS tools, backups and install report'
+                  $sc.Save()
+                  Write-Output "SHORTCUTS: $link"
+              } catch {
+                  Write-Output "SHORTCUTS: failed for $link : $($_.Exception.Message)"
+              }
+          }
+      }
+      exit 0
+    wait: true
+    errorAction: Log

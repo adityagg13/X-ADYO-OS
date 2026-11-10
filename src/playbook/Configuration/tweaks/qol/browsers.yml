@@ -1,0 +1,67 @@
+title: Install Browser
+description: >-
+  Installs the browser picked on the wizard's browser page: Chrome and Firefox via
+  Chocolatey, Brave from its signed standalone installer (x64 or Arm64). One of the
+  three is always selected.
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Installing the selected browser'}
+
+  # --- Google Chrome ------------------------------------------------------------------------
+  - !software:
+    option: 'browser-chrome'
+    name: 'googlechrome'
+    source: chocolatey
+    package: 'chrome'
+    weight: 150
+    errorAction: Log
+
+  # --- Brave (standalone installer, architecture gated) ------------------------------------
+  - !download:
+    option: 'browser-brave'
+    url: 'https://github.com/brave/brave-browser/releases/latest/download/BraveBrowserStandaloneSetup.exe'
+    destination: 'BraveBrowserStandaloneSetup.exe'
+    overwrite: true
+    cpuArch: X64
+    package: 'brave'
+    errorAction: Log
+  - !run:
+    option: 'browser-brave'
+    exeDir: true
+    exe: 'BraveBrowserStandaloneSetup.exe'
+    args: '/silent /install'
+    wait: true
+    cpuArch: X64
+    weight: 150
+    errorAction: Log
+
+  - !download:
+    option: 'browser-brave'
+    url: 'https://github.com/brave/brave-browser/releases/latest/download/BraveBrowserStandaloneSetupArm64.exe'
+    destination: 'BraveBrowserStandaloneSetupArm64.exe'
+    overwrite: true
+    cpuArch: Arm64
+    package: 'brave'
+    errorAction: Log
+  - !run:
+    option: 'browser-brave'
+    exeDir: true
+    exe: 'BraveBrowserStandaloneSetupArm64.exe'
+    args: '/silent /install'
+    wait: true
+    cpuArch: Arm64
+    weight: 150
+    errorAction: Log
+
+  # --- Firefox -----------------------------------------------------------------------------
+  - !software:
+    option: 'browser-firefox'
+    name: 'firefox'
+    source: chocolatey
+    package: 'firefox'
+    weight: 150
+    errorAction: Log
+
+  # Setting the default browser is deliberately left to the user: Windows 10 and 11
+  # protect the default-browser association, and silently rewriting it is exactly
+  # the behaviour X-ADYO OS avoids. Windows will offer the choice on first launch.

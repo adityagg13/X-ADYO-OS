@@ -1,0 +1,38 @@
+X-ADYO OS
+Copyright (C) 2026 X-ADYO OS contributors
+
+This program is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software Foundation,
+either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this
+program. If not, see <https://www.gnu.org/licenses/>.
+
+------------------------------------------------------------------------------
+COMPONENTS
+
+1. Playbook engine
+   X-ADYO OS is an AME Wizard playbook (engine v0.8.4 format, MIT-licensed engine).
+   The package contains configuration, scripts and images only - no engine code.
+
+2. Brand assets
+   The X-ADYO OS name, logo ("K-ADYO" badge), wallpaper and lock screen were supplied
+   by the project owner and are licensed under the same GPL-3.0 terms unless the
+   owner states otherwise.
+
+3. Browser logos
+   The Chrome, Brave and Firefox marks in `src/playbook/Images/` are the official
+   vendor logos, used only to identify the browser each option installs. See
+   CREDITS.md.
+
+------------------------------------------------------------------------------
+TRADEMARKS
+
+Windows, Windows 10 and Windows 11 are trademarks of Microsoft Corporation. X-ADYO OS
+is not affiliated with, endorsed by, or supported by Microsoft. Modifying Windows can
+violate Microsoft's licence terms depending on your edition and use case; you are
+responsible for your own system.

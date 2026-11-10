@@ -1,0 +1,58 @@
+---
+title: Visual Extras
+description: >-
+  Optional transparency switch, recent-document history off, and (Extreme only)
+  reduced window animations. All per-user settings that apply to Windows 10 and
+  Windows 11 alike.
+actions:
+  - !writeStatus: {status: 'Applying visual extras'}
+
+  # --- Transparency effects (option) -------------------------------------------------------
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize'
+    value: 'EnableTransparency'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    option: 'configure-te'
+
+  # --- Recent documents / jump list history off --------------------------------------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer'
+    value: 'NoRecentDocsHistory'
+    data: '1'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer'
+    value: 'NoRecentDocsHistory'
+    data: '1'
+    type: REG_DWORD
+    scope: currentUser
+    errorAction: Log
+
+  # --- Extreme: no window animations, faster menus -----------------------------------------
+  - !registryValue:
+    path: 'HKCU\Control Panel\Desktop\WindowMetrics'
+    value: 'MinAnimate'
+    data: '0'
+    type: REG_SZ
+    scope: currentUser
+    option: 'preset-extreme'
+    errorAction: Log
+  - !registryValue:
+    path: 'HKCU\Control Panel\Desktop'
+    value: 'MenuShowDelay'
+    data: '200'
+    type: REG_SZ
+    scope: currentUser
+    option: 'preset-extreme'
+    errorAction: Log
+
+  # --- Disable "Show more options" hover text and other shell tips -------------------------
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'ShowTypeOverlay'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    errorAction: Log

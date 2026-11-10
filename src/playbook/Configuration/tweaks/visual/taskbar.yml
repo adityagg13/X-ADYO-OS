@@ -1,0 +1,100 @@
+---
+title: Taskbar
+description: >-
+  Removes the taskbar clutter that exists on both operating systems: widgets and
+  chat on Windows 11, "News and interests" and the Cortana button on Windows 10.
+  Search becomes an icon instead of a full box.
+actions:
+  - !writeStatus: {status: 'Configuring the taskbar'}
+
+  # --- Common -------------------------------------------------------------------------------
+  - !registryValue:
+    path: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'ShowTaskViewButton'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Search'
+    value: 'SearchboxTaskbarMode'
+    data: '1'
+    type: REG_DWORD
+    scope: currentUser
+
+  # --- Windows 10: News and interests + Cortana button -------------------------------------
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Feeds'
+    value: 'ShellFeedsTaskbarViewMode'
+    data: '2'
+    type: REG_DWORD
+    scope: currentUser
+    builds: ['<22000']
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Feeds'
+    value: 'EnableFeeds'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    builds: ['<22000']
+  - !registryValue:
+    path: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'ShowCortanaButton'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    builds: ['<22000']
+
+  # --- Windows 11: chat icon, widgets, left alignment ---------------------------------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Chat'
+    value: 'ChatIcon'
+    data: '3'
+    type: REG_DWORD
+    builds: ['>=22000']
+    errorAction: Log
+  - !registryValue:
+    path: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'TaskbarMn'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    builds: ['>=22000']
+  - !registryValue:
+    path: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'TaskbarDa'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    builds: ['>=22000']
+  - !registryValue:
+    path: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'TaskbarAl'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    builds: ['>=22000']
+  - !registryValue:
+    path: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'TaskbarSi'
+    data: '1'
+    type: REG_DWORD
+    scope: currentUser
+    builds: ['>=22000']
+
+  # --- Windows 11: no "recommended" taskbar/search additions ------------------------------
+  - !registryValue:
+    path: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'ShowCopilotButton'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    builds: ['>=22000']
+    errorAction: Log
+
+  # --- Multi-monitor: show taskbar on all displays (Windows 10) ----------------------------
+  - !registryValue:
+    path: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'MMTaskbarEnabled'
+    data: '1'
+    type: REG_DWORD
+    scope: currentUser

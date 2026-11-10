@@ -1,0 +1,53 @@
+---
+title: Windows AI Data (Windows 11)
+description: >-
+  Windows 11 only. Switches off Recall's background screenshot analysis and the
+  AI data-processing policies that back it, while leaving Copilot itself available
+  unless the user selected "Remove AI".
+builds: ['>=22000']
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Disabling Windows AI data collection'}
+
+  # Recall snapshots the screen continuously and indexes it locally. Off by default
+  # for everyone; the "Remove AI" option additionally removes the packages.
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI'
+    value: 'DisableAIDataAnalysis'
+    data: '1'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI'
+    value: 'AllowRecallEnablement'
+    data: '0'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKCU\Software\Policies\Microsoft\Windows\WindowsAI'
+    value: 'DisableAIDataAnalysis'
+    data: '1'
+    type: REG_DWORD
+    scope: currentUser
+
+  # Stop the two Recall-related scheduled work items where the build ships them
+  - !scheduledTask: {path: '\Microsoft\Windows\WindowsAI\Recall', operation: disable, errorAction: Log}
+
+  # Click to Do / Image Creator are opt-in surfaces; keep them off on managed-feel installs
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI'
+    value: 'DisableClickToDo'
+    data: '1'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI'
+    value: 'DisableImageCreator'
+    data: '1'
+    type: REG_DWORD
+
+  # Windows 11 search box "AI actions" (24H2+)
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SearchSettings'
+    value: 'IsAIEnabled'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    errorAction: Log

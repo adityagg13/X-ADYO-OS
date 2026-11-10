@@ -1,0 +1,67 @@
+---
+title: X-ADYO OS Start
+description: >-
+  Prepares the system for deployment - cleans up an old X-ADYO OS install, mutes
+  notifications during deployment, creates the tooling folder and writes the
+  setup markers the report and undo tooling read.
+actions:
+  # Kill any process still running from an old X-ADYO-OS folder (upgrade path)
+  - !powerShell:
+    command: |
+      $windir = [Environment]::GetFolderPath('Windows')
+      if (Test-Path "$windir\X-ADYO-OS") {
+          Get-Process | Where-Object { $_.Path -like "$windir\X-ADYO-OS*" } -ErrorAction SilentlyContinue |
+              Stop-Process -Force -ErrorAction SilentlyContinue
+      }
+      exit 0
+    wait: true
+    oobe: false
+    onUpgrade: true
+
+  # Remove the old tooling folder (recreated by tweaks\branding\copy-folders.yml)
+  - !powerShell:
+    command: |
+      $windir = [Environment]::GetFolderPath('Windows')
+      Remove-Item -LiteralPath "$windir\X-ADYO-OS" -Force -Recurse -ErrorAction SilentlyContinue
+      exit 0
+    wait: true
+    oobe: false
+    onUpgrade: true
+
+  # Mute toast notifications while deploying (re-enabled in finish.yml)
+  - !powerShell:
+    command: |
+      Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\PushNotifications' -Name 'ToastEnabled' -Value 0 -Type DWord -ErrorAction SilentlyContinue
+      Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\Settings' -Name 'NOC_GLOBAL_SETTING_TOASTS_ENABLED' -Value 0 -Type DWord -ErrorAction SilentlyContinue
+      exit 0
+    runas: currentUserElevated
+    wait: true
+
+  # Setup markers (read by the X-ADYO OS folder toggles, install report and undo)
+  - !registryKey: {path: 'HKLM\SOFTWARE\X-ADYO-OS\SetupOptions', operation: add}
+  - !registryValue: {path: 'HKLM\SOFTWARE\X-ADYO-OS\SetupOptions', value: 'Version', data: '1.0.0', type: REG_SZ}
+
+  # Preset marker - exactly one of these three writes the same value name
+  - !registryValue: {path: 'HKLM\SOFTWARE\X-ADYO-OS\SetupOptions', value: 'Preset', data: 'safe', type: REG_SZ, option: 'preset-safe'}
+  - !registryValue: {path: 'HKLM\SOFTWARE\X-ADYO-OS\SetupOptions', value: 'Preset', data: 'balanced', type: REG_SZ, option: 'preset-balanced'}
+  - !registryValue: {path: 'HKLM\SOFTWARE\X-ADYO-OS\SetupOptions', value: 'Preset', data: 'extreme', type: REG_SZ, option: 'preset-extreme'}
+
+  # OS family marker for the report (single write, no branching needed)
+  - !powerShell:
+    command: |
+      $cv = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -ErrorAction SilentlyContinue
+      $name = if ($cv.CurrentBuildNumber -ge 22000) { 'Windows 11' } else { 'Windows 10' }
+      $full = "$($cv.ProductName) $($cv.DisplayVersion) (build $($cv.CurrentBuild).$($cv.UBR))"
+      New-Item -Path 'HKLM:\SOFTWARE\X-ADYO-OS\SetupOptions' -Force | Out-Null
+      Set-ItemProperty -Path 'HKLM:\SOFTWARE\X-ADYO-OS\SetupOptions' -Name 'OsFamily' -Value $name -Type String
+      Set-ItemProperty -Path 'HKLM:\SOFTWARE\X-ADYO-OS\SetupOptions' -Name 'OsFull' -Value $full -Type String
+      exit 0
+    wait: true
+
+  # Create the tooling folder early so later actions can always write into it
+  - !powerShell:
+    command: |
+      New-Item -ItemType Directory -Force -Path "$([Environment]::GetFolderPath('Windows'))\X-ADYO-OS" | Out-Null
+      New-Item -ItemType Directory -Force -Path "$([Environment]::GetFolderPath('Windows'))\X-ADYO-OS\Backups" | Out-Null
+      exit 0
+    wait: true

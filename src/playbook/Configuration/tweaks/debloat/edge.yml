@@ -1,0 +1,73 @@
+---
+title: Remove Microsoft Edge
+description: >-
+  Opt-in extra: unlocks Edge for removal, runs Edge's own setup.exe uninstaller,
+  sweeps the Edge AppX families and disables the updater tasks so Edge cannot
+  respawn. WebView2 is never touched.
+option: 'opt-uninstall-edge'
+onUpgrade: false
+actions:
+  # RISKS (documented honestly):
+  # - Removing Edge can cause an update failure loop on some builds. If a cumulative
+  #   update fails afterwards, reinstall Edge (winget install Microsoft.Edge), update,
+  #   then remove again.
+  # - Your browser profile/data stays on disk; install another browser from the
+  #   wizard pages or afterwards.
+  # - WebView2 stays: Outlook, Widgets, Xbox sign-in, Photos editing and many
+  #   third-party apps depend on it.
+  # - Undo: winget install Microsoft.Edge --source winget
+  - !writeStatus: {status: 'Removing Microsoft Edge'}
+
+  # Kill the Edge ecosystem first so nothing relaunches or locks files mid-removal
+  - !taskKill: {name: 'msedge*', ignoreErrors: true}
+  - !taskKill: {name: 'MicrosoftEdgeUpdate*', ignoreErrors: true}
+  - !taskKill: {name: 'setup*', pathContains: '\Edge', ignoreErrors: true}
+
+  # Unlock step 1: AllowUninstall in both registry views
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\EdgeUpdateDev'
+    value: 'AllowUninstall'
+    data: ''
+    type: REG_SZ
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdateDev'
+    value: 'AllowUninstall'
+    data: ''
+    type: REG_SZ
+
+  # Unlock step 2: drop the NoRemove flag from the uninstall registrations
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft Edge'
+    value: 'NoRemove'
+    operation: delete
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft Edge'
+    value: 'NoRemove'
+    operation: delete
+
+  # The removal itself (locates setup.exe and runs --uninstall --system-level)
+  - !powerShell:
+    command: '.\EDGE-UNLOCK.ps1'
+    exeDir: true
+    wait: true
+    runas: currentUserElevated
+    errorAction: Log
+
+  # Sweep the Edge AppX families (legacy UWP stub, Game Assist, DevTools client).
+  # MicrosoftEdgeWebView2* is deliberately NOT listed.
+  - !appx: {name: 'Microsoft.MicrosoftEdge*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.MicrosoftEdge.Stable*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.Edge.GameAssist*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.MicrosoftEdge.DevTools.CDP*', type: family, errorAction: Log}
+
+  # Updater tasks and services - otherwise EdgeUpdate can re-create Edge after reboot
+  - !scheduledTask: {path: '\Microsoft\EdgeUpdate\MicrosoftEdgeUpdateTaskMachineCore', operation: disable, errorAction: Log}
+  - !scheduledTask: {path: '\Microsoft\EdgeUpdate\MicrosoftEdgeUpdateTaskMachineUA', operation: disable, errorAction: Log}
+  - !service: {name: 'edgeupdate', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'edgeupdatem', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'MicrosoftEdgeElevationService', operation: change, startup: 4, errorAction: Log}
+
+  # Deprovisioned marker so Windows Update cannot reinstall the Edge stub
+  - !registryKey:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Deprovisioned\Microsoft.MicrosoftEdge_8wekyb3d8bbwe'
+    operation: add

@@ -1,0 +1,68 @@
+---
+title: Services and Drivers (Balanced)
+description: >-
+  Conservative service set that is safe on both Windows 10 and Windows 11.
+  Telemetry services (DiagTrack, WerSvc) are owned by the privacy module and are
+  deliberately not duplicated here. Aggressive changes live in
+  tweaks\services\extreme-services.yml (Extreme preset only).
+actions:
+  # Engine !service startup codes: 0=Boot 1=System 2=Automatic 3=Manual 4=Disabled.
+  # Every action is errorAction: Log so a service that does not exist on a given
+  # Windows build can never halt deployment. Pre-change values are captured by
+  # BACKUP.ps1 into C:\Windows\X-ADYO-OS\Backups\services-before.reg.
+  #
+  # NEVER-TOUCH (validator hard-errors on startup 4 / delete):
+  #   wuauserv TrustedInstaller UsoSvc DoSvc Spooler Audiosrv Winmgmt Schedule
+  #   profsvc UserMgr StateRepository InstallService AppXSvc ClipSVC
+  #   SecurityHealthService MDCoreSvc WlanSvc netman netprofm NlaSvc
+  #   CDPSvc CDPUserSvc WaaSMedicSvc BITS cryptsvc msiserver Xbox* GamingServices
+  - !writeStatus: {status: 'Configuring services'}
+
+  # --- Legacy / deprecated -----------------------------------------------------------------
+  - !service: {name: 'Fax', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'RemoteRegistry', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'RetailDemo', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'WMPNetworkSvc', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'SNMPTRAP', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'WpcMonSvc', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'diagnosticshub.standardcollector.service', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'Browser', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'RemoteAccess', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'lfsvc', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'MapsBroker', operation: change, startup: 4, errorAction: Log}
+
+  # --- Windows 10 only (removed or renamed on Windows 11) ----------------------------------
+  - !service:
+    name: 'dmwappushservice'
+    operation: change
+    startup: 4
+    builds: ['<22000']
+    errorAction: Log
+  - !service:
+    name: 'WalletService'
+    operation: change
+    startup: 4
+    builds: ['<22000']
+    errorAction: Log
+
+  # --- On-demand instead of automatic (keeps functionality, cuts idle work) ----------------
+  - !service: {name: 'WSearch', operation: change, startup: 3, errorAction: Log}
+  - !service: {name: 'PhoneSvc', operation: change, startup: 3, errorAction: Log}
+  - !service: {name: 'stisvc', operation: change, startup: 3, errorAction: Log}
+  - !service: {name: 'SSDPSRV', operation: change, startup: 3, errorAction: Log}
+  - !service: {name: 'upnphost', operation: change, startup: 3, errorAction: Log}
+  - !service: {name: 'FDResPub', operation: change, startup: 3, errorAction: Log}
+  - !service: {name: 'lmhosts', operation: change, startup: 3, errorAction: Log}
+  - !service: {name: 'TrkWks', operation: change, startup: 3, errorAction: Log}
+  - !service: {name: 'SharedAccess', operation: change, startup: 3, errorAction: Log}
+  - !service: {name: 'SstpSvc', operation: change, startup: 3, errorAction: Log}
+  - !service: {name: 'ALG', operation: change, startup: 3, errorAction: Log}
+  - !service: {name: 'PcaSvc', operation: change, startup: 3, errorAction: Log}
+  - !service: {name: 'WdiServiceHost', operation: change, startup: 3, errorAction: Log}
+  - !service: {name: 'WdiSystemHost', operation: change, startup: 3, errorAction: Log}
+
+  # --- Opt-in extras from the wizard --------------------------------------------------------
+  # Disable SysMain / Superfetch (fast NVMe + plenty of RAM)
+  - !service: {name: 'SysMain', operation: change, startup: 4, option: 'opt-disable-sysmain', errorAction: Log}
+  # Disable Windows Search indexing entirely
+  - !service: {name: 'WSearch', operation: change, startup: 4, option: 'opt-disable-search-indexing', errorAction: Log}

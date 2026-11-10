@@ -1,0 +1,35 @@
+---
+title: CPU Mitigations (opt-in)
+description: >-
+  Opt-in only. Disables the Spectre/Meltdown software mitigations for CPUs that
+  are not vulnerable or where the user accepts the risk. This is a security
+  reduction - it is off by default and documented in docs/COMPATIBILITY.md.
+option: 'opt-disable-mitigations'
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Disabling CPU mitigations'}
+
+  # FeatureSettingsOverride 3 + mask 3 = mitigations disabled for the OS and for
+  # processes that do not opt back in. Takes effect after a reboot.
+  # Undo: delete both values and reboot.
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management'
+    value: 'FeatureSettingsOverride'
+    data: '3'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management'
+    value: 'FeatureSettingsOverrideMask'
+    data: '3'
+    type: REG_DWORD
+
+  # Record that a reboot is required, and note it for the install report.
+  - !powerShell:
+    command: |
+      Write-Output 'SECURITY: CPU mitigations disabled - a reboot is required'
+      exit 0
+    wait: true
+
+  # DEP and Control Flow Guard are intentionally NOT touched: both are required by
+  # modern games and by Windows' own security model, and disabling them causes
+  # crashes rather than speed.

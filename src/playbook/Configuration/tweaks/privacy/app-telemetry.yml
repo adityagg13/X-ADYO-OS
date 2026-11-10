@@ -1,0 +1,32 @@
+---
+title: Application Telemetry
+description: >-
+  Policy-level telemetry switches for the applications that ship with or commonly
+  run on Windows: Microsoft Edge, Office, NVIDIA components and Visual Studio.
+  All are simple policy values - nothing is uninstalled here.
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Disabling application telemetry'}
+
+  # --- Microsoft Edge ----------------------------------------------------------------------
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Edge', value: 'MetricsReportingEnabled', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Edge', value: 'SendSiteInfoToImproveServices', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Edge', value: 'PersonalizationReportingEnabled', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Edge', value: 'UserFeedbackAllowed', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Edge', value: 'DiagnosticData', data: '0', type: REG_DWORD}
+
+  # --- Microsoft 365 / Office -------------------------------------------------------------
+  # SendTelemetry 3 = neither required nor optional diagnostic data.
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Office\Common\ClientTelemetry', value: 'SendTelemetry', data: '3', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Office\Common\ClientTelemetry', value: 'DisableTelemetry', data: '1', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Office\16.0\Common\Feedback', value: 'Enabled', data: '0', type: REG_DWORD}
+
+  # --- NVIDIA ------------------------------------------------------------------------------
+  - !registryValue: {path: 'HKLM\SOFTWARE\NVIDIA Corporation\Global\FTS', value: 'EnableRID', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\NVIDIA Corporation\Global\FTS', value: 'EnableRID66610', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\NVIDIA Corporation\Global\FTS', value: 'EnableRID64640', data: '0', type: REG_DWORD}
+
+  # --- Visual Studio -----------------------------------------------------------------------
+  - !registryValue: {path: 'HKLM\SOFTWARE\Microsoft\VSCommon\14.0\SQM', value: 'OptIn', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Microsoft\VSCommon\15.0\SQM', value: 'OptIn', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Microsoft\VSCommon\16.0\SQM', value: 'OptIn', data: '0', type: REG_DWORD}

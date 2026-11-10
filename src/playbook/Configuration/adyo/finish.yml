@@ -1,0 +1,57 @@
+---
+title: X-ADYO OS Finish
+description: >-
+  Generates the install report, restores notifications, restarts Explorer so the
+  visual changes appear, and records whether a reboot is required.
+actions:
+  - !writeStatus: {status: 'Finishing X-ADYO OS'}
+
+  # --- Re-enable toast notifications -------------------------------------------------------
+  - !powerShell:
+    command: |
+      Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\PushNotifications' -Name 'ToastEnabled' -Value 1 -Type DWord -ErrorAction SilentlyContinue
+      Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\Settings' -Name 'NOC_GLOBAL_SETTING_TOASTS_ENABLED' -Value 1 -Type DWord -ErrorAction SilentlyContinue
+      exit 0
+    runas: currentUserElevated
+    wait: true
+    errorAction: Log
+
+  # --- Install report ---------------------------------------------------------------------
+  - !writeStatus: {status: 'Generating the install report'}
+  - !powerShell:
+    command: '.\REPORT.ps1'
+    exeDir: true
+    wait: true
+    errorAction: Log
+
+  # --- Reboot-required marker --------------------------------------------------------------
+  # Mitigations and VBS changes only take effect after a restart; note it for the
+  # report and the X-ADYO OS folder.
+  - !powerShell:
+    command: |
+      $need = $false
+      $mem = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management' -ErrorAction SilentlyContinue
+      if ($mem.FeatureSettingsOverride -eq 3) { $need = $true }
+      $bcd = (bcdedit /enum '{current}' | Select-String 'hypervisorlaunchtype\s+off')
+      if ($bcd) { $need = $true }
+      $flag = Join-Path ([Environment]::GetFolderPath('Windows')) 'X-ADYO-OS\reboot-required.txt'
+      if ($need) {
+          'X-ADYO OS changed settings that need a restart (CPU mitigations and/or Core Isolation).' |
+              Out-File -LiteralPath $flag -Encoding UTF8
+          Write-Output 'FINISH: reboot required'
+      } elseif (Test-Path -LiteralPath $flag) {
+          Remove-Item -LiteralPath $flag -Force -ErrorAction SilentlyContinue
+      }
+      exit 0
+    wait: true
+    errorAction: Log
+
+  # --- Restart Explorer so wallpaper, taskbar and context menu changes appear --------------
+  - !taskKill: {name: 'explorer', errorAction: Log}
+  - !cmd:
+    command: 'start "" explorer.exe'
+    runas: currentUserElevated
+    wait: false
+    errorAction: Log
+
+  - !writeStatus: {status: 'X-ADYO OS deployment complete'}

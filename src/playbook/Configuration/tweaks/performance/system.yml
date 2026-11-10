@@ -1,0 +1,122 @@
+---
+title: System Performance
+description: >-
+  Scheduler priority, MMCSS multimedia responsiveness, NTFS and memory tuning.
+  The balanced values are the tuned defaults X-ADYO OS ships; optional items carry a
+  documented trade-off.
+actions:
+  - !writeStatus: {status: 'Tuning system performance'}
+
+  # --- Multimedia scheduler -----------------------------------------------------------------
+  # 20 is the Windows default; 10 gives background multimedia work less time while
+  # keeping enough for audio. 0 is reserved for pro-audio machines.
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile'
+    value: 'SystemResponsiveness'
+    data: '10'
+    type: REG_DWORD
+
+  # --- Games task profile -------------------------------------------------------------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games'
+    value: 'GPU Priority'
+    data: '8'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games'
+    value: 'Priority'
+    data: '6'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games'
+    value: 'Scheduling Category'
+    data: 'High'
+    type: REG_SZ
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games'
+    value: 'SFIO Priority'
+    data: 'High'
+    type: REG_SZ
+
+  # --- CPU scheduling: short, variable quantum (favours foreground work) --------------------
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl'
+    value: 'Win32PrioritySeparation'
+    data: '26'
+    type: REG_DWORD
+
+  # --- NTFS: no last-access timestamps (fewer writes, same behaviour for users) ------------
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\FileSystem'
+    value: 'NtfsDisableLastAccessUpdate'
+    data: '80000003'
+    type: REG_DWORD
+
+  # --- Memory -------------------------------------------------------------------------------
+  # Keep the kernel out of the page file trade-off default; only Extreme changes it.
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management'
+    value: 'LargeSystemCache'
+    data: '0'
+    type: REG_DWORD
+
+  # --- Fault Tolerant Heap: stops Windows silently shimming crashing apps ------------------
+  - !registryValue: {path: 'HKLM\SOFTWARE\Microsoft\FTH', value: 'Enabled', data: '0', type: REG_DWORD}
+
+  # --- OPTION: disable HAGS / GPU scheduling -----------------------------------------------
+  # 1 = hardware-accelerated GPU scheduling off, 2 = on (Windows default on 2004+).
+  # Situational: some games and capture tools behave better with it off.
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers'
+    value: 'HwSchMode'
+    data: '1'
+    type: REG_DWORD
+    option: 'opt-disable-hags'
+
+  # --- OPTION: disable memory compression (16 GB+ RAM) -------------------------------------
+  - !powerShell:
+    command: |
+      try {
+          Disable-MMAgent -MemoryCompression -ErrorAction Stop
+          Write-Output 'MEM: memory compression disabled'
+      } catch {
+          Write-Output "MEM: could not disable memory compression: $($_.Exception.Message)"
+      }
+      exit 0
+    wait: true
+    option: 'opt-disable-sysmain'
+    errorAction: Log
+
+  # --- EXTREME: keep the kernel resident, disable power throttling --------------------------
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management'
+    value: 'DisablePagingExecutive'
+    data: '1'
+    type: REG_DWORD
+    option: 'preset-extreme'
+    errorAction: Log
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling'
+    value: 'PowerThrottlingOff'
+    data: '1'
+    type: REG_DWORD
+    option: 'preset-extreme'
+    errorAction: Log
+
+  # --- EXTREME: disable automatic maintenance ----------------------------------------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance'
+    value: 'ActivationGranularity'
+    data: '0'
+    type: REG_DWORD
+    option: 'preset-extreme'
+    errorAction: Log
+
+  # --- EXTREME: prefetch off (only sensible with an SSD) -----------------------------------
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters'
+    value: 'EnablePrefetcher'
+    data: '0'
+    type: REG_DWORD
+    option: 'preset-extreme'
+    errorAction: Log

@@ -1,0 +1,43 @@
+---
+title: Cross-Device Features
+description: >-
+  Turns off cloud clipboard sync, shared experiences and "continue on this PC"
+  hand-off. Phone Link still works if the user keeps it; only the background
+  cross-device plumbing is disabled.
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Disabling cross-device features'}
+
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System', value: 'EnableMobility', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System', value: 'AllowCrossDeviceClipboard', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System', value: 'EnableSharedExperiences', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System', value: 'EnableCdp', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System', value: 'EnableClipboardHistory', data: '0', type: REG_DWORD, errorAction: Log}
+
+  # Per-user hand-off toggle
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CDP'
+    value: 'ContinueExperienceOnThisDevice'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CDP'
+    value: 'RomeSdkChannelUserAuthzPolicy'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+
+  # Clipboard history / cloud sync UI
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Clipboard'
+    value: 'EnableClipboardHistory'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Clipboard'
+    value: 'CloudClipboardAutomaticUpload'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser

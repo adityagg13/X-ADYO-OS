@@ -1,0 +1,72 @@
+---
+title: Search Hardening
+description: >-
+  Keeps Windows Search local: no Bing/web results, no cloud content in search, no
+  search highlights and no search telemetry. Works on Windows 10 and Windows 11
+  (the "search highlights" keys are Windows 11 only and harmless elsewhere).
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Hardening Windows Search'}
+
+  # --- Machine-wide search policy ---------------------------------------------------------
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search', value: 'AllowCortana', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search', value: 'AllowSearchToUseLocation', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search', value: 'DisableWebSearch', data: '1', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search', value: 'ConnectedSearchUseWeb', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search', value: 'ConnectedSearchUseWebOverMeteredConnections', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search', value: 'AllowCloudSearch', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search', value: 'EnableDynamicContentInWSB', data: '0', type: REG_DWORD}
+
+  # --- Per-user: no web results, no Bing previews, no search history ----------------------
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search'
+    value: 'BingSearchEnabled'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search'
+    value: 'CortanaConsent'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search'
+    value: 'DisableSearchBoxSuggestions'
+    data: '1'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SearchSettings'
+    value: 'IsDeviceSearchHistoryEnabled'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SearchSettings'
+    value: 'IsMSACloudSearchEnabled'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SearchSettings'
+    value: 'IsAADCloudSearchEnabled'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+
+  # --- Search highlights / "search the web" chrome (Windows 11) ---------------------------
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SearchSettings'
+    value: 'IsDynamicSearchBoxEnabled'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    builds: ['>=22000']
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'ShowSearchHighlights'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    builds: ['>=22000']

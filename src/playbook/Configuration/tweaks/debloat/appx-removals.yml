@@ -1,0 +1,131 @@
+---
+title: Remove Bloatware Apps
+description: >-
+  Removes deprecated and unwanted inbox apps for every build of Windows 10 and
+  Windows 11, then deprovisions the AppX families that disappeared so a feature
+  update cannot silently reinstall them. Windows 11 only packages are gated with
+  builds: ['>=22000']; Windows 10 only packages with builds: ['<22000'].
+onUpgrade: false
+actions:
+  # NEVER REMOVE (the validator also refuses these):
+  #   Microsoft.WindowsStore*        - reinstalling anything needs it
+  #   Microsoft.DesktopAppInstaller  - provides winget (rollback path)
+  #   Microsoft.Web.WebView2          - runtime for Outlook/Widgets/Xbox/Photos
+  #   Microsoft.VCLibs.* / Microsoft.NET.Native.* / Microsoft.UI.Xaml.*
+  #   Microsoft.WindowsAppRuntime.*   - frameworks used by dozens of apps
+  #   Microsoft.XboxIdentityProvider* / Microsoft.Xbox.TCUI*
+  #   MicrosoftWindows.Client.CBS*, *StartMenuExperienceHost*, *ShellExperienceHost*,
+  #   *Windows.Search*, Microsoft.Windows.FileExplorer, Microsoft.Windows.SecHealthUI
+  # Kept for usability: Calculator, Notepad, Paint, Terminal, Snipping Tool,
+  # Media Player, Camera, Sticky Notes, Alarms.
+  - !writeStatus: {status: 'Removing bloatware apps'}
+
+  # Snapshot every package family BEFORE removals. DEPROVISION.ps1 diffs this list
+  # afterwards and removes exactly the provisioned packages that disappeared.
+  - !powerShell:
+    command: |
+      New-Item -ItemType Directory -Force -Path "$([Environment]::GetFolderPath('Windows'))\X-ADYO-OS" | Out-Null
+      (Get-AppxPackage).PackageFamilyName |
+        Out-File "$([Environment]::GetFolderPath('Windows'))\X-ADYO-OS\AppxPackagesOld.txt"
+      exit 0
+    runas: currentUserElevated
+    wait: true
+
+  # ============================ SAFE TIER (every preset) ===============================
+  - !taskKill: {name: 'msteams*', ignoreErrors: true}
+  - !appx: {name: 'MicrosoftTeams*', type: family, errorAction: Log}
+  - !appx: {name: 'MSTeams*', type: family, errorAction: Log}
+
+  # Cortana (retired)
+  - !appx: {name: 'Microsoft.549981C3F5F10*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.549981C3F8F0*', type: family, errorAction: Log}
+
+  # Tips / feedback / help
+  - !appx: {name: 'Microsoft.GetHelp*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.Getstarted*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.WindowsFeedbackHub*', type: family, errorAction: Log}
+
+  # 3D / legacy media / store advertising apps
+  - !appx: {name: 'Microsoft.Microsoft3DViewer*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.Print3D*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.SkypeApp*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.BingNews*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.BingWeather*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.MicrosoftSolitaireCollection*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.MixedReality.Portal*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.PowerAutomateDesktop*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.WindowsMaps*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.People*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.Todos*', type: family, errorAction: Log}
+
+  # Legacy Zune media apps (Windows 11 uses Media Player instead)
+  - !appx: {name: 'Microsoft.ZuneMusic*', type: family, errorAction: Log}
+  - !appx: {name: 'Microsoft.ZuneVideo*', type: family, errorAction: Log}
+
+  # Windows 10 only inbox apps
+  - !appx:
+    name: 'Microsoft.MicrosoftOfficeHub*'
+    type: family
+    builds: ['<22000']
+    errorAction: Log
+  - !appx:
+    name: 'Microsoft.OneConnect*'
+    type: family
+    builds: ['<22000']
+    errorAction: Log
+  - !appx:
+    name: 'Microsoft.MicrosoftStickyNotes*'
+    type: family
+    builds: ['<22000']
+    errorAction: Log
+
+  # Windows 11 only inbox apps
+  - !appx:
+    name: 'Clipchamp.Clipchamp*'
+    type: family
+    builds: ['>=22000']
+    errorAction: Log
+  - !appx:
+    name: 'Microsoft.Windows.DevHome*'
+    type: family
+    builds: ['>=22000']
+    option: 'remove-appx-devhome'
+    errorAction: Log
+  - !appx:
+    name: 'Microsoft.Windows.Photos*'
+    type: family
+    builds: ['>=22000']
+    option: 'remove-appx-photos'
+    errorAction: Log
+
+  # ============================ WIZARD OPTIONS ========================================
+  # Phone Link
+  - !appx: {name: 'Microsoft.YourPhone*', type: family, option: 'remove-appx-yourphone', errorAction: Log}
+  - !appx: {name: 'MicrosoftWindows.CrossDevice*', type: family, option: 'remove-appx-yourphone', errorAction: Log}
+
+  # Xbox apps (Game Pass may need them)
+  - !appx: {name: 'Microsoft.GamingApp*', type: family, option: 'remove-appx-xbox', errorAction: Log}
+  - !appx: {name: 'Microsoft.XboxApp*', type: family, option: 'remove-appx-xbox', errorAction: Log}
+  - !appx: {name: 'Microsoft.XboxGameOverlay*', type: family, option: 'remove-appx-xbox', errorAction: Log}
+  - !appx: {name: 'Microsoft.XboxGamingOverlay*', type: family, option: 'remove-appx-xbox', errorAction: Log}
+  - !appx: {name: 'Microsoft.XboxSpeechToTextOverlay*', type: family, option: 'remove-appx-xbox', errorAction: Log}
+
+  # Xbox identity provider stays (Microsoft-account sign-in for games uses it)
+
+  # ============================ EXTREME ONLY ==========================================
+  # Widgets / news feed app (removes the taskbar widgets panel on Windows 11)
+  - !appx:
+    name: 'MicrosoftWindows.Client.WebExperience*'
+    type: family
+    builds: ['>=22000']
+    option: 'preset-extreme'
+    errorAction: Log
+
+  # ============================ DEPROVISION ===========================================
+  - !writeStatus: {status: 'Deprovisioning removed apps'}
+  - !powerShell:
+    command: '.\DEPROVISION.ps1'
+    exeDir: true
+    wait: true
+    runas: currentUserElevated
+    errorAction: Log

@@ -1,0 +1,39 @@
+---
+title: Services (Extreme preset)
+description: >-
+  Additional service reductions that only run when the Extreme preset is
+  selected. Every item here has a real trade-off and is listed in
+  docs/PRESETS.md. Nothing in the never-touch list is modified.
+option: 'preset-extreme'
+actions:
+  - !writeStatus: {status: 'Applying extreme service configuration'}
+
+  # Xbox stack - Game Pass / Xbox app features stop working (re-enable with
+  # `sc config XblAuthManager start= demand` or the restore point).
+  - !service: {name: 'XblAuthManager', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'XblGameSave', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'XboxNetApiSvc', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'XboxGipSvc', operation: change, startup: 4, errorAction: Log}
+
+  # Touch keyboard / handwriting - only sensible on non-touch desktops
+  - !service: {name: 'TabletInputService', operation: change, startup: 4, errorAction: Log}
+
+  # Sensors (rotation, ambient light) - laptops with auto-rotate lose that
+  - !service: {name: 'SensorService', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'SensorDataService', operation: change, startup: 4, errorAction: Log}
+
+  # Payments / NFC / mobile hotspot
+  - !service: {name: 'SEMgrSvc', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'icssvc', operation: change, startup: 4, errorAction: Log}
+
+  # App readiness and data sharing (UWP pre-launch work)
+  - !service: {name: 'AppReadiness', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'DsSvc', operation: change, startup: 4, errorAction: Log}
+
+  # Delivery Optimization kept on demand: Windows Update still works, P2P
+  # sharing with other PCs stops.
+  - !service: {name: 'DoSvc', operation: change, startup: 3, errorAction: Log}
+
+  # Error reporting and print notifications
+  - !service: {name: 'WerSvc', operation: change, startup: 4, errorAction: Log}
+  - !service: {name: 'PrintNotify', operation: change, startup: 3, errorAction: Log}

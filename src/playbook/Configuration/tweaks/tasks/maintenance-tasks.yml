@@ -1,0 +1,31 @@
+---
+title: Maintenance Tasks
+description: >-
+  Disables background maintenance tasks that only produce disk and CPU churn.
+  Windows Update, Defender, defrag/TRIM, restore points and backup tasks are
+  deliberately left enabled.
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Configuring maintenance tasks'}
+
+  # Disk footprint telemetry / diagnostics
+  - !scheduledTask: {path: '\Microsoft\Windows\DiskFootprint\Diagnostics', operation: disable, errorAction: Log}
+  - !scheduledTask: {path: '\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticResolver', operation: disable, errorAction: Log}
+
+  # WinSAT performance assessment
+  - !scheduledTask: {path: '\Microsoft\Windows\Maintenance\WinSAT', operation: disable, errorAction: Log}
+
+  # Autochk proxy (boot-time volume scan reporting)
+  - !scheduledTask: {path: '\Microsoft\Windows\Autochk\Proxy', operation: disable, errorAction: Log}
+
+  # Temporary file cleanup (Windows 11)
+  - !scheduledTask: {path: '\Microsoft\Windows\ApplicationData\CleanupTemporaryState', operation: disable, builds: ['>=22000'], errorAction: Log}
+
+  # Soft landing / OOBE cloud experience
+  - !scheduledTask: {path: '\Microsoft\Windows\CloudExperienceHost\CreateObjectTask', operation: disable, errorAction: Log}
+
+  # Registry backup (only runs on some OEM images)
+  - !scheduledTask: {path: '\Microsoft\Windows\Registry\RegIdleBackup', operation: disable, errorAction: Log}
+
+  # Delivery Optimization idle scan remains enabled: Windows Update benefits from it
+  # Defrag / ScheduledDefrag intentionally NOT disabled (SSD TRIM lives there)

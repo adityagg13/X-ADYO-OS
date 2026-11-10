@@ -1,0 +1,64 @@
+---
+title: Windows Update Behaviour
+description: >-
+  X-ADYO OS never disables Windows Update. This module only chooses between
+  automatic installs and notify-before-download, and stops Windows from restarting
+  while you are signed in. Applies to Windows 10 and Windows 11.
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Configuring Windows Update'}
+
+  # --- Never reboot while a user is signed in ----------------------------------------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU'
+    value: 'NoAutoRebootWithLoggedOnUsers'
+    data: '1'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU'
+    value: 'NoAutoUpdate'
+    data: '0'
+    type: REG_DWORD
+
+  # --- OPTION: notify before downloading ---------------------------------------------------
+  # AUOptions 2 = notify for download and notify for install. Security updates still
+  # arrive, they simply wait for the user.
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU'
+    value: 'AUOptions'
+    data: '2'
+    type: REG_DWORD
+    option: 'wu-notify'
+  # --- OPTION: automatic (default) ---------------------------------------------------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU'
+    value: 'AUOptions'
+    data: '4'
+    type: REG_DWORD
+    option: 'wu-auto'
+
+  # --- "Get the latest updates as soon as they're available" off ---------------------------
+  # This is the toggle that opts a device into the next release early. Off keeps the
+  # machine on the stable servicing branch.
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings'
+    value: 'IsContinuousInnovationOptedIn'
+    data: '0'
+    type: REG_DWORD
+    errorAction: Log
+
+  # --- Don't treat "optional" driver/quality previews as recommended -----------------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings'
+    value: 'AllowMUUpdateService'
+    data: '1'
+    type: REG_DWORD
+    errorAction: Log
+
+  # --- Pause "update available, restart now" full-screen nag ------------------------------
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings'
+    value: 'RestartNotificationsAllowed2'
+    data: '0'
+    type: REG_DWORD
+    errorAction: Log

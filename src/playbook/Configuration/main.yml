@@ -1,0 +1,119 @@
+---
+title: X-ADYO OS Root Playbook
+description: >-
+  Runs every X-ADYO OS module in a speed-optimized order on Windows 10 (1809+) and
+  Windows 11 (21H2 - 26H2). Each module carries its own build gates, so one
+  playbook serves both operating systems.
+actions:
+  # Load the Default user hive so per-user tweaks are mirrored for future accounts.
+  # Best-effort unload first: a previous run may have halted between load and unload.
+  - !powerShell:
+    command: |
+      reg unload HKU\AME_UserHive_Default 2>$null
+      reg load HKU\AME_UserHive_Default C:\Users\Default\NTUSER.DAT
+      exit $LASTEXITCODE
+    oobe: false
+    wait: true
+
+  - !writeStatus: {status: 'Preparing X-ADYO OS'}
+
+  # Early setup - upgrade cleanup, mute notifications, write setup markers.
+  # Must run BEFORE copy-folders so the upgrade cleanup cannot delete the fresh copy.
+  - !task: {path: 'adyo\start.yml'}
+
+  # X-ADYO OS tooling folder (C:\Windows\X-ADYO-OS: report, undo, backups, toggles)
+  - !task: {path: 'tweaks\branding\copy-folders.yml'}
+
+  # Restore point (wizard option rp-on)
+  - !writeStatus: {status: 'Creating System Restore point'}
+  - !powerShell:
+    command: '.\RESTOREPOINT.ps1'
+    exeDir: true
+    wait: true
+    option: 'rp-on'
+    weight: 3
+
+  # Backups of the current state (services, appx, tasks) - used by UNDO and the report
+  - !writeStatus: {status: 'Backing up current state'}
+  - !powerShell:
+    command: '.\BACKUP.ps1'
+    exeDir: true
+    wait: true
+    weight: 2
+
+  # ============================== DEBLOAT ==============================
+  - !writeStatus: {status: 'Removing bloatware'}
+  - !task: {path: 'tweaks\debloat\appx-removals.yml'}
+  - !task: {path: 'tweaks\debloat\onedrive.yml'}
+  - !task: {path: 'tweaks\debloat\edge.yml'}
+  - !task: {path: 'tweaks\debloat\ai-components.yml'}
+  - !task: {path: 'tweaks\debloat\reinstall-blockers.yml'}
+
+  # ============================== SCHEDULED TASKS ======================
+  - !writeStatus: {status: 'Configuring scheduled tasks'}
+  - !task: {path: 'tweaks\tasks\telemetry-tasks.yml'}
+  - !task: {path: 'tweaks\tasks\maintenance-tasks.yml'}
+
+  # ============================== PRIVACY ==============================
+  - !writeStatus: {status: 'Applying privacy tweaks'}
+  - !task: {path: 'tweaks\privacy\telemetry-services.yml'}
+  - !task: {path: 'tweaks\privacy\telemetry-policies.yml'}
+  - !task: {path: 'tweaks\privacy\settings-privacy.yml'}
+  - !task: {path: 'tweaks\privacy\cloud-content.yml'}
+  - !task: {path: 'tweaks\privacy\search-hardening.yml'}
+  - !task: {path: 'tweaks\privacy\ai-features.yml'}
+  - !task: {path: 'tweaks\privacy\app-telemetry.yml'}
+  - !task: {path: 'tweaks\privacy\cross-device.yml'}
+
+  # ============================== SERVICES =============================
+  - !writeStatus: {status: 'Configuring services'}
+  - !task: {path: 'adyo\services.yml'}
+  - !task: {path: 'tweaks\services\extreme-services.yml'}
+
+  # ============================== PERFORMANCE ==========================
+  - !writeStatus: {status: 'Applying performance tweaks'}
+  - !task: {path: 'tweaks\performance\power.yml'}
+  - !task: {path: 'tweaks\performance\system.yml'}
+  - !task: {path: 'tweaks\performance\gaming.yml'}
+  - !task: {path: 'tweaks\performance\input.yml'}
+
+  # ============================== NETWORK ==============================
+  - !writeStatus: {status: 'Optimizing network settings'}
+  - !task: {path: 'tweaks\network\core.yml'}
+  - !task: {path: 'tweaks\network\nic-config.yml'}
+
+  # ============================== APPEARANCE ===========================
+  - !writeStatus: {status: 'Applying visual and usability tweaks'}
+  - !task: {path: 'tweaks\visual\context-menu.yml'}
+  - !task: {path: 'tweaks\visual\taskbar.yml'}
+  - !task: {path: 'tweaks\visual\explorer.yml'}
+  - !task: {path: 'tweaks\visual\extras.yml'}
+
+  # ============================== QUALITY OF LIFE ======================
+  - !task: {path: 'tweaks\qol\updates.yml'}
+  - !task: {path: 'tweaks\qol\shortcuts.yml'}
+  - !task: {path: 'tweaks\qol\browsers.yml'}
+  - !task: {path: 'tweaks\branding\wallpaper.yml'}
+  - !task: {path: 'tweaks\branding\oem-info.yml'}
+
+  # ============================== SECURITY (opt-in) ====================
+  - !writeStatus: {status: 'Configuring security options'}
+  - !task: {path: 'tweaks\security\mitigations.yml'}
+  - !task: {path: 'tweaks\security\vbs.yml'}
+
+  # Copy the mirrored HKCU tweaks into the default user hive (best-effort per section)
+  - !writeStatus: {status: 'Applying default user hive'}
+  - !powerShell:
+    command: '.\APPLYHIVE.ps1'
+    exeDir: true
+    wait: true
+    runas: currentUserElevated
+
+  # ============================== FINISH ===============================
+  - !task: {path: 'adyo\finish.yml'}
+
+  # Unload the default-user hive
+  - !powerShell:
+    command: 'reg unload HKU\AME_UserHive_Default'
+    oobe: false
+    wait: true

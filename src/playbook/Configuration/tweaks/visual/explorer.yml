@@ -1,0 +1,76 @@
+---
+title: Explorer and Theme
+description: >-
+  Shows file extensions, opens File Explorer at This PC, stops Quick Access from
+  tracking recent files, and applies Dark Mode when selected. Both the Windows 10
+  and Windows 11 personalisation keys are written.
+actions:
+  - !writeStatus: {status: 'Configuring Explorer'}
+
+  # --- Show file extensions and full paths -------------------------------------------------
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'HideFileExt'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'LaunchTo'
+    data: '1'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CabinetState'
+    value: 'FullPath'
+    data: '1'
+    type: REG_DWORD
+    scope: currentUser
+    errorAction: Log
+
+  # --- Quick Access: stop tracking recently used files and folders -------------------------
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'Start_TrackDocs'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'ShowFrequent'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    errorAction: Log
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'ShowRecent'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    errorAction: Log
+
+  # --- Dark mode (option) ------------------------------------------------------------------
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize'
+    value: 'AppsUseLightTheme'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    option: 'configure-darkmode'
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize'
+    value: 'SystemUsesLightTheme'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+    option: 'configure-darkmode'
+
+  # --- Sort order / view consistency -------------------------------------------------------
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    value: 'NavPaneShowAllFolders'
+    data: '1'
+    type: REG_DWORD
+    scope: currentUser
+    errorAction: Log

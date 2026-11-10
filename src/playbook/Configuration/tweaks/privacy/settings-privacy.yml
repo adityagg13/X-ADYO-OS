@@ -1,0 +1,64 @@
+---
+title: Settings Privacy
+description: >-
+  Per-user privacy defaults: location access off, activity history off, no
+  cross-device activity publishing. Written with scope: currentUser so the
+  settings land in the signed-in profile (APPLYHIVE.ps1 mirrors them to the
+  Default hive for future accounts).
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Applying privacy settings'}
+
+  # --- Location ---------------------------------------------------------------------------
+  - !registryValue:
+    path: 'HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location'
+    value: 'Value'
+    data: 'Deny'
+    type: REG_SZ
+    scope: currentUser
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors'
+    value: 'DisableLocation'
+    data: '1'
+    type: REG_DWORD
+
+  # --- Activity history / timeline --------------------------------------------------------
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System', value: 'EnableActivityFeed', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System', value: 'PublishUserActivities', data: '0', type: REG_DWORD}
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System', value: 'UploadUserActivities', data: '0', type: REG_DWORD}
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy'
+    value: 'PublishUserActivities'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+
+  # --- Online speech recognition / diagnostics -------------------------------------------
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Speech_OneCore\Settings\OnlineSpeechPrivacy'
+    value: 'HasAccepted'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync'
+    value: 'SyncPolicy'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+
+  # --- Suggested / diagnostic tailored content -------------------------------------------
+  - !registryValue: {path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent', value: 'DisableTailoredExperiencesWithDiagnosticData', data: '1', type: REG_DWORD}
+
+  # --- Feedback frequency: never ---------------------------------------------------------
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Siuf\Rules'
+    value: 'NumberOfSIUFInPeriod'
+    data: '0'
+    type: REG_DWORD
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\SOFTWARE\Microsoft\Siuf\Rules'
+    value: 'PeriodInNanoSeconds'
+    operation: delete
+    scope: currentUser

@@ -1,0 +1,47 @@
+---
+title: Copy X-ADYO OS Folders
+description: >-
+  Copies the post-install tooling folder, wallpapers, OEM logo and helper scripts
+  into C:\Windows\X-ADYO-OS so the install report, undo tooling and toggles survive
+  after the playbook finishes.
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Copying X-ADYO OS folders'}
+
+  # Tooling folder: report, undo, backups and the toggle scripts
+  - !cmd:
+    exeDir: true
+    command: 'robocopy "X-ADYO-OSFolder" "%SystemRoot%\X-ADYO-OS" /E /PURGE /IM /IT /NP'
+    ignoreErrors: true
+    weight: 20
+
+  # Wallpapers
+  - !cmd:
+    exeDir: true
+    command: 'robocopy "Wallpapers" "%SystemRoot%\X-ADYO-OS\Wallpapers" /E /IM /IT /NP'
+    ignoreErrors: true
+    weight: 10
+
+  # OEM logo + the scripts the folder toggles call
+  - !cmd:
+    exeDir: true
+    command: 'copy /y "adyo-logo.bmp" "%SystemRoot%\X-ADYO-OS\adyo-logo.bmp"'
+    ignoreErrors: true
+  - !cmd:
+    exeDir: true
+    command: 'copy /y "REPORT.ps1" "%SystemRoot%\X-ADYO-OS\REPORT.ps1"'
+    ignoreErrors: true
+  - !cmd:
+    exeDir: true
+    command: 'copy /y "UNDO.ps1" "%SystemRoot%\X-ADYO-OS\UNDO.ps1"'
+    ignoreErrors: true
+  - !cmd:
+    exeDir: true
+    command: 'copy /y "RESTOREPOINT.ps1" "%SystemRoot%\X-ADYO-OS\RESTOREPOINT.ps1"'
+    ignoreErrors: true
+  - !cmd:
+    exeDir: true
+    command: 'copy /y "default-user.reg" "%SystemRoot%\X-ADYO-OS\default-user.reg"'
+    ignoreErrors: true
+
+  - !writeStatus: {status: 'X-ADYO OS folders ready'}

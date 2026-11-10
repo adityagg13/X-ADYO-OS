@@ -1,0 +1,36 @@
+---
+title: OEM Information
+description: >-
+  Writes the OEM information block so Windows shows "X-ADYO OS" as the system
+  manufacturer and the Adyo badge in System Information / Settings > About. Works
+  on Windows 10 and Windows 11.
+actions:
+  - !writeStatus: {status: 'Writing OEM information'}
+
+  - !registryKey: {path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation', operation: add}
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation'
+    value: 'Manufacturer'
+    data: 'X-ADYO OS'
+    type: REG_SZ
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation'
+    value: 'Model'
+    data: 'X-ADYO OS v1.0.0 - Windows 10 + 11'
+    type: REG_SZ
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation'
+    value: 'SupportHours'
+    data: 'Community support'
+    type: REG_SZ
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation'
+    value: 'SupportURL'
+    data: 'https://github.com/adyo-os/playbook'
+    type: REG_SZ
+  - !registryValue:
+    path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation'
+    value: 'Logo'
+    data: 'C:\Windows\X-ADYO-OS\adyo-logo.bmp'
+    type: REG_SZ
+    errorAction: Log

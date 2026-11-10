@@ -1,0 +1,41 @@
+---
+title: Core Isolation / VBS (opt-in)
+description: >-
+  Opt-in only. Disables Virtualization-Based Security and Hypervisor-Enforced Code
+  Integrity ("Core Isolation / Memory integrity"), which removes a virtualisation
+  layer and can help on older CPUs and in virtual machines. This reduces security
+  and breaks WSL2, Hyper-V, Windows Sandbox and the Android subsystem until it is
+  re-enabled.
+option: 'opt-disable-vbs'
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Disabling Core Isolation / VBS'}
+
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard'
+    value: 'EnableVirtualizationBasedSecurity'
+    data: '0'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity'
+    value: 'Enabled'
+    data: '0'
+    type: REG_DWORD
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\CredentialGuard'
+    value: 'Enabled'
+    data: '0'
+    type: REG_DWORD
+
+  # The hypervisor itself stays loaded until the boot configuration changes.
+  - !powerShell:
+    command: |
+      bcdedit /set hypervisorlaunchtype off | Out-Null
+      Write-Output 'SECURITY: VBS/Core Isolation disabled - reboot required; WSL2/Hyper-V will not start until re-enabled'
+      exit 0
+    wait: true
+    errorAction: Log
+
+  # Undo (documented in the report and docs):
+  #   bcdedit /set hypervisorlaunchtype auto
+  #   reg add HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard /v EnableVirtualizationBasedSecurity /t REG_DWORD /d 1 /f

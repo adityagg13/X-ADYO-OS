@@ -1,0 +1,37 @@
+---
+title: X-ADYO OS Wallpaper
+description: >-
+  Applies the X-ADYO OS desktop wallpaper and lock screen for every profile and for
+  the Default hive. Images are copied to C:\Windows\X-ADYO-OS\Wallpapers first, so
+  they survive after the playbook folder is cleaned up.
+option: 'configure-wallpaper'
+onUpgrade: false
+actions:
+  - !writeStatus: {status: 'Applying the X-ADYO OS wallpaper'}
+
+  # Copy the artwork into the permanent tooling folder
+  - !cmd:
+    exeDir: true
+    command: 'copy /y "Wallpapers\adyo-desktop.jpg" "%SystemRoot%\X-ADYO-OS\Wallpapers\adyo-desktop.jpg"'
+    ignoreErrors: true
+  - !cmd:
+    exeDir: true
+    command: 'copy /y "Wallpapers\adyo-lockscreen.jpg" "%SystemRoot%\X-ADYO-OS\Wallpapers\adyo-lockscreen.jpg"'
+    ignoreErrors: true
+
+  # Apply to the loaded user hives, the live session and the lock screen policy
+  - !powerShell:
+    command: '.\ADYO-WALLPAPER.ps1'
+    exeDir: true
+    wait: true
+    runas: currentUserElevated
+    errorAction: Log
+
+  # Mirror the wallpaper into the Default hive for future accounts
+  - !registryValue:
+    path: 'HKCU\Control Panel\Desktop'
+    value: 'WallPaper'
+    data: 'C:\Windows\X-ADYO-OS\Wallpapers\adyo-desktop.jpg'
+    type: REG_SZ
+    scope: defaultUser
+    errorAction: Log

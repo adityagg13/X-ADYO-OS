@@ -1,0 +1,58 @@
+---
+title: Power Configuration
+description: >-
+  Disables Fast Startup (safer kernel state on every shutdown) and offers two
+  opt-in extras: a latency-focused Maximum Performance scheme and hibernation
+  removal. Works identically on Windows 10 and Windows 11.
+actions:
+  - !writeStatus: {status: 'Configuring power settings'}
+
+  # --- Fast Startup off (all presets) ------------------------------------------------------
+  # Resuming from hiberfil.sys carries driver state across "shutdowns" and locks
+  # NTFS for other operating systems. Slightly slower cold boot, far more reliable
+  # state. If hibernation is disabled below, Fast Startup disappears anyway.
+  - !registryValue:
+    path: 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power'
+    value: 'HiberbootEnabled'
+    data: '0'
+    type: REG_DWORD
+
+  # --- OPTION: remove hibernation ----------------------------------------------------------
+  - !powerShell:
+    command: |
+      powercfg /hibernate off
+      Write-Output 'POWER: hibernation disabled'
+      exit 0
+    wait: true
+    option: 'opt-disable-hibernation'
+    errorAction: Log
+
+  # --- OPTION: Maximum Performance scheme --------------------------------------------------
+  # Duplicates the hidden Ultimate Performance template under a fixed X-ADYO OS GUID,
+  # activates and renames it, then removes the power-saving idle states that add
+  # latency. COST: higher idle power draw and heat, USB devices never sleep. Not
+  # recommended on laptops. Undo: powercfg /setactive SCHEME_BALANCED
+  - !powerShell:
+    command: |
+      $scheme = '556c7472-614f-4f53-8000-00000000ad40'
+      $exists = (powercfg /l) | Select-String $scheme -Quiet
+      if (-not $exists) {
+          powercfg /duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 $scheme > $null
+      }
+      powercfg /setactive $scheme
+      powercfg /changename $scheme 'X-ADYO OS Performance' 'Latency-focused scheme derived from Ultimate Performance.' > $null
+      # Disk / NVMe idle timeout = never
+      powercfg /setacvalueindex $scheme 0012ee47-9041-4b5d-9b77-535fba8b1442 6738e2c4-e8a5-4a42-b16a-e040e769756e 0
+      # USB selective suspend off
+      powercfg /setacvalueindex $scheme 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0
+      # Processor: minimum and maximum state 100%
+      powercfg /setacvalueindex $scheme 54533251-82be-4824-96c1-47b60b740d00 893dee8e-2bef-41e0-89c6-b55d0929964c 100
+      powercfg /setacvalueindex $scheme 54533251-82be-4824-96c1-47b60b740d00 bc5038f7-23e0-4960-96da-33abaf5935ec 100
+      # Display stays on for the longest supported interval
+      powercfg /setacvalueindex $scheme 7516b95f-f776-4464-8c53-06167f40cc99 3c0bc021-c8a8-4e07-a973-6b14cbcb2b7e 0
+      powercfg /setactive $scheme
+      Write-Output "POWER: maximum performance scheme '$scheme' active"
+      exit 0
+    wait: true
+    option: 'opt-max-performance'
+    errorAction: Log

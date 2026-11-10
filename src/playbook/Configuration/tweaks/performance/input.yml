@@ -1,0 +1,52 @@
+---
+title: Input Configuration
+description: >-
+  Removes Windows mouse acceleration ("enhance pointer precision") for consistent
+  aim, and optionally disables the five-times-Shift Sticky Keys shortcut. Both
+  work the same on Windows 10 and Windows 11.
+actions:
+  - !writeStatus: {status: 'Configuring input settings'}
+
+  # --- Mouse acceleration off ---------------------------------------------------------------
+  # Windows applies a curve to pointer movement unless these three values are zero.
+  - !registryValue:
+    path: 'HKCU\Control Panel\Mouse'
+    value: 'MouseSpeed'
+    data: '0'
+    type: REG_SZ
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\Control Panel\Mouse'
+    value: 'MouseThreshold1'
+    data: '0'
+    type: REG_SZ
+    scope: currentUser
+  - !registryValue:
+    path: 'HKCU\Control Panel\Mouse'
+    value: 'MouseThreshold2'
+    data: '0'
+    type: REG_SZ
+    scope: currentUser
+
+  # --- Extreme: Sticky Keys shortcut off (Shift x5) ----------------------------------------
+  # Accessibility users who rely on Sticky Keys should leave this alone; the toggle
+  # stays available in Settings > Accessibility > Keyboard.
+  - !registryValue:
+    path: 'HKCU\Control Panel\Accessibility\StickyKeys'
+    value: 'Flags'
+    data: '506'
+    type: REG_SZ
+    scope: currentUser
+    option: 'preset-extreme'
+    errorAction: Log
+  - !registryValue:
+    path: 'HKCU\Control Panel\Accessibility\ToggleKeys'
+    value: 'Flags'
+    data: '58'
+    type: REG_SZ
+    scope: currentUser
+    option: 'preset-extreme'
+    errorAction: Log
+
+  # --- Extreme: no "you have been signed in with a temporary profile" ... not applicable ---
+  # (intentionally left blank - X-ADYO OS never touches profile or sign-in behaviour)
