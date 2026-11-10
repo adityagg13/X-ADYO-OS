@@ -8,7 +8,7 @@
 
 ## Download
 
-[**X-ADYO-OS-v1.0.0.apbx**](https://github.com/adityagg13/X-ADYO-OS/releases/latest) — the ready-to-use package (ZIP, password `malte`).
+[**X-ADYO-OS-v1.0.0.apbx**](https://github.com/adityagg13/X-ADYO-OS/releases/latest) — the ready-to-use package.
 Open it in AME Wizard via **Playbooks → Open**. Build it yourself from source with the
 commands in [Build](#build).
 
