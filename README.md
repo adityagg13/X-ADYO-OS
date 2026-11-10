@@ -6,6 +6,12 @@
 
 **One AME Wizard playbook for Windows 10 *and* Windows 11 — every build from Windows 10 1809 to Windows 11 26H2.**
 
+## Download
+
+[**X-ADYO-OS-v1.0.0.apbx**](https://github.com/adityagg13/X-ADYO-OS/releases/latest) — the ready-to-use package (ZIP, password `malte`).
+Open it in AME Wizard via **Playbooks → Open**. Build it yourself from source with the
+commands in [Build](#build).
+
 X-ADYO OS is one build-aware configuration for every Windows 10 and Windows 11 release:
 
 | Area | What it covers |
