@@ -31,8 +31,10 @@
 ## 📦 Download
 
 [**X-ADYO-OS-v1.0.0.apbx**](https://github.com/adityagg13/X-ADYO-OS/releases/latest) — the ready-to-use package.
+Direct link (always the newest release): [X-ADYO-OS.apbx](https://github.com/adityagg13/X-ADYO-OS/releases/latest/download/X-ADYO-OS.apbx).
 Open it in AME Wizard via **Playbooks → Open**, or build it yourself from source with the
-commands in [Build](#build).
+commands in [Build](#build). The website at [xadyoos.vercel.app](https://xadyoos.vercel.app)
+has the full guide and an on-site [docs page](https://xadyoos.vercel.app/docs).
 
 X-ADYO OS is one build-aware configuration for every Windows 10 and Windows 11 release:
 
@@ -151,6 +153,7 @@ AME Wizard via **Playbooks → Open**.
 
 | Doc | What's in it |
 |---|---|
+| [Website docs](https://xadyoos.vercel.app/docs) | The same guides on the site — install, presets, modules, troubleshooting, license |
 | [docs/INSTALL.md](docs/INSTALL.md) | Step-by-step run guide, from download to the post-install report |
 | [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) | Supported builds, requirements and known caveats |
 | [docs/PRESETS.md](docs/PRESETS.md) | The exact per-preset change table |
