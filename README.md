@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/adityagg13/X-ADYO-OS/releases/latest"><img src="https://img.shields.io/github/v/release/adityagg13/X-ADYO-OS?style=flat-square&color=2f6bff&label=release" alt="Release"></a>
-  <a href="https://www.adityakumarjha5052.workers.dev"><img src="https://img.shields.io/badge/website-live-2f6bff?style=flat-square&logo=googlechrome&logoColor=white" alt="Website"></a>
+  <a href="https://xadyoos.vercel.app"><img src="https://img.shields.io/badge/website-live-2f6bff?style=flat-square&logo=vercel&logoColor=white" alt="Website"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-2f6bff?style=flat-square" alt="GPL-3.0"></a>
   <a href="docs/COMPATIBILITY.md"><img src="https://img.shields.io/badge/Windows-10%20%7C%2011-2f6bff?style=flat-square&logo=windows&logoColor=white" alt="Windows 10 and 11"></a>
   <a href="docs/PRESETS.md"><img src="https://img.shields.io/badge/presets-Safe%20%7C%20Balanced%20%7C%20Extreme-2f6bff?style=flat-square" alt="Presets"></a>
