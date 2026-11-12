@@ -1,15 +1,36 @@
-# X-ADYO OS
-
 <p align="center">
-  <img src="src/playbook/playbook.png" alt="X-ADYO OS" width="220">
+  <img src="src/playbook/playbook.png" alt="X-ADYO OS" width="160">
 </p>
 
-**One AME Wizard playbook for Windows 10 *and* Windows 11 — every build from Windows 10 1809 to Windows 11 26H2.**
+<h1 align="center">X-ADYO OS</h1>
 
-## Download
+<p align="center">
+  <strong>One AME Wizard playbook for Windows 10 <em>and</em> Windows 11 —</strong><br>
+  every build from Windows 10 1809 to Windows 11 26H2.
+</p>
+
+<p align="center">
+  <a href="https://github.com/adityagg13/X-ADYO-OS/releases/latest"><img src="https://img.shields.io/github/v/release/adityagg13/X-ADYO-OS?style=flat-square&color=2f6bff&label=release" alt="Release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-2f6bff?style=flat-square" alt="GPL-3.0"></a>
+  <a href="docs/COMPATIBILITY.md"><img src="https://img.shields.io/badge/Windows-10%20%7C%2011-2f6bff?style=flat-square&logo=windows&logoColor=white" alt="Windows 10 and 11"></a>
+  <a href="docs/PRESETS.md"><img src="https://img.shields.io/badge/presets-Safe%20%7C%20Balanced%20%7C%20Extreme-2f6bff?style=flat-square" alt="Presets"></a>
+  <img src="https://img.shields.io/badge/AME%20Wizard-playbook-2f6bff?style=flat-square" alt="AME Wizard playbook">
+</p>
+
+<p align="center">
+  <a href="#-download">Download</a> ·
+  <a href="#-quick-start">Quick start</a> ·
+  <a href="#-why-one-playbook-for-both-operating-systems">Build coverage</a> ·
+  <a href="#-presets">Presets</a> ·
+  <a href="#-docs">Docs</a>
+</p>
+
+---
+
+## 📦 Download
 
 [**X-ADYO-OS-v1.0.0.apbx**](https://github.com/adityagg13/X-ADYO-OS/releases/latest) — the ready-to-use package.
-Open it in AME Wizard via **Playbooks → Open**. Build it yourself from source with the
+Open it in AME Wizard via **Playbooks → Open**, or build it yourself from source with the
 commands in [Build](#build).
 
 X-ADYO OS is one build-aware configuration for every Windows 10 and Windows 11 release:
@@ -26,9 +47,16 @@ X-ADYO OS is one build-aware configuration for every Windows 10 and Windows 11 r
 > Windows 10 1809 install and on Windows 11 26H2. `docs/MODULES.md` lists every module
 > and what it changes.
 
----
+## 🚀 Quick start
 
-## Why one playbook for both operating systems
+1. Download the [latest `.apbx`](https://github.com/adityagg13/X-ADYO-OS/releases/latest) and open it in AME Wizard (**Playbooks → Open**).
+2. Read [docs/INSTALL.md](docs/INSTALL.md) and [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md). Keep the laptop **plugged in** and Windows Update **fully up to date** before running.
+3. Pick a preset — **Safe**, **Balanced** (default) or **Extreme** — keep the restore point on, and choose your browser (**Google Chrome**, **Brave** or **Firefox**).
+4. Apply. After the reboot (only needed for the optional mitigation/VBS switches) open `C:\Windows\X-ADYO-OS\install-report.html` to see every change that was made.
+
+The full pass takes about **12 minutes**. It needs an internet connection and no pending updates.
+
+## 🧠 Why one playbook for both operating systems
 
 X-ADYO OS keeps per-module `builds:` gates, so one package can serve:
 
@@ -41,9 +69,7 @@ menu, HAGS, AI policies) carry `builds: ['>=22000']`. Windows 10-only tweaks
 (News and interests, Cortana button, WalletService, dmwappushservice, HomeGroup,
 Wi-Fi Sense) carry `builds: ['<22000']`. Everything shared is ungated.
 
----
-
-## Presets
+## 🎚️ Presets
 
 | Preset | What it does |
 |---|---|
@@ -54,9 +80,7 @@ Wi-Fi Sense) carry `builds: ['<22000']`. Everything shared is ungated.
 Every preset writes the same restore point, the same backups and the same install
 report. See [docs/PRESETS.md](docs/PRESETS.md) for the exact per-preset table.
 
----
-
-## Structure
+## 🗂️ Structure
 
 ```
 src/playbook/
@@ -80,9 +104,7 @@ src/playbook/
 └── Executables/                   # PowerShell tooling + wallpapers + logo
 ```
 
----
-
-## Build
+## 🔨 Build
 
 ```bash
 python scripts/validate-playbook.py     # schema + safety checks, must print OK
@@ -101,19 +123,7 @@ python scripts/build-playbook.py        # -> dist/X-ADYO-OS-v1.0.0.apbx
 The archive root contains `playbook.conf` directly — no wrapping folder. Open it in
 AME Wizard via **Playbooks → Open**.
 
----
-
-## Install
-
-1. Read [docs/INSTALL.md](docs/INSTALL.md) and [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
-2. Disable Defender's real-time toggles when the wizard asks (the playbook does not
-   remove Defender, but the engine needs the toggles off to write system state).
-3. Pick a preset, keep the restore point on, choose your browser
-   (**Google Chrome**, **Brave** or **Firefox**), apply.
-4. After the reboot (only needed for the optional mitigation/VBS switches) open
-   `C:\Windows\X-ADYO-OS\install-report.html`.
-
-## Safety model
+## 🛟 Safety model
 
 - **Restore point first** (unless you turn it off), then **full backups** of services,
   AppX families and scheduled tasks into `C:\Windows\X-ADYO-OS\Backups`.
@@ -124,9 +134,7 @@ AME Wizard via **Playbooks → Open**.
   winget, WebView2 and the shell AppX families.
 - Removed apps can always be reinstalled from the Store; the report lists them.
 
----
-
-## Verification status (honest)
+## ✅ Verification status (honest)
 
 - `scripts/validate-playbook.py` passes: XML schema, page limits, option names,
   include resolution, tag names, build-gate syntax, protected services/apps,
@@ -138,9 +146,18 @@ AME Wizard via **Playbooks → Open**.
   Test on a VM/snapshot first — especially the Edge removal, the Win10 1809–1909
   gates and the Extreme service set.
 
----
+## 📚 Docs
 
-## Credits and license
+| Doc | What's in it |
+|---|---|
+| [docs/INSTALL.md](docs/INSTALL.md) | Step-by-step run guide, from download to the post-install report |
+| [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) | Supported builds, requirements and known caveats |
+| [docs/PRESETS.md](docs/PRESETS.md) | The exact per-preset change table |
+| [docs/MODULES.md](docs/MODULES.md) | Every module and what it touches |
+| [docs/STOCK-VALUES.md](docs/STOCK-VALUES.md) | Every value the playbook can change, at stock |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common failures and fixes |
+
+## ⚖️ Credits and license
 
 X-ADYO OS is released under GPL-3.0. See [LICENSE](LICENSE), [NOTICE](NOTICE) and
 [CREDITS.md](CREDITS.md). The name, logo, wallpaper and lock screen were supplied by
