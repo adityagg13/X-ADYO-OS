@@ -154,6 +154,7 @@ AME Wizard via **Playbooks → Open**.
 | Doc | What's in it |
 |---|---|
 | [Website docs](https://xadyoos.vercel.app/docs) | The same guides on the site — install, presets, modules, troubleshooting, license |
+| [Website source](https://github.com/adityagg13/xadyoos-website) | The repo behind xadyoos.vercel.app — the landing page and docs site code |
 | [docs/INSTALL.md](docs/INSTALL.md) | Step-by-step run guide, from download to the post-install report |
 | [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) | Supported builds, requirements and known caveats |
 | [docs/PRESETS.md](docs/PRESETS.md) | The exact per-preset change table |
